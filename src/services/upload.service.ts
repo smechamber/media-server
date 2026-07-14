@@ -6,6 +6,10 @@ import { getFileType } from "../utils/file.utils.js";
 export async function uploadService(file: Express.Multer.File) {
   const type = getFileType(file.mimetype);
 
+  if (!type) {
+    throw new Error("Unsupported file type");
+  }
+
   let finalPath = file.path;
 
   if (type === "image") {
@@ -21,6 +25,7 @@ export async function uploadService(file: Express.Multer.File) {
   return {
     success: true,
     id: filename.split(".")[0],
+    resourceType: type,
     filename,
     originalName: file.originalname,
     folder,

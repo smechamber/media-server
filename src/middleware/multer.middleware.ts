@@ -3,28 +3,44 @@ import path from "path";
 import fs from "fs-extra";
 import { randomUUID } from "crypto";
 import { getFileType } from "../utils/file.utils.js";
-import { isAllowedFolder } from "../config/folders.js";
 
 const storage = multer.diskStorage({
   destination: async (req: any, file, cb) => {
-    const type = getFileType(file.mimetype);
+  const type = getFileType(file.mimetype);
 
-    if (!type) {
+  if (!type) {
+    return cb(new Error("Unsupported file type"), "");
+  }
+
+  let folder = "";
+
+  switch (type) {
+    case "image":
+      folder = "images";
+      break;
+
+    case "video":
+      folder = "videos";
+      break;
+
+    case "document":
+      folder = "documents";
+      break;
+
+    default:
       return cb(new Error("Unsupported file type"), "");
-    }
+  }
 
-    const folder = (req.body.folder || `${type}s`).toLowerCase();
+  const uploadPath = path.join(
+    process.cwd(),
+    "uploads",
+    folder
+  );
 
-    if (!isAllowedFolder(folder)) {
-      return cb(new Error("Invalid folder"), "");
-    }
+  await fs.ensureDir(uploadPath);
 
-    const uploadPath = path.join(process.cwd(), "uploads", folder);
-
-    await fs.ensureDir(uploadPath);
-
-    cb(null, uploadPath);
-  },
+  cb(null, uploadPath);
+},
 
   filename(req, file, cb) {
     cb(null, randomUUID() + path.extname(file.originalname));
