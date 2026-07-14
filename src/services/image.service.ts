@@ -5,34 +5,23 @@ import path from "path";
 export async function processImage(filePath: string) {
   const ext = path.extname(filePath).toLowerCase();
 
-  if (
-    ext !== ".jpg" &&
-    ext !== ".jpeg" &&
-    ext !== ".png" &&
-    ext !== ".webp"
-  ) {
-    return filePath;
+  if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+    return {
+      path: filePath,
+    };
   }
 
   const webpPath = filePath.replace(ext, ".webp");
 
-  const metadata = await sharp(filePath).metadata();
-
   let image = sharp(filePath).rotate();
-
-  if ((metadata.width ?? 0) > 1920) {
-    image = image.resize({
-      width: 1920,
-      withoutEnlargement: true,
-    });
-  }
 
   if (ext === ".webp") {
     const stat = await fs.stat(filePath);
 
-    // Already optimized (<500KB)
     if (stat.size < 500 * 1024) {
-      return filePath;
+      return {
+        path: filePath,
+      };
     }
   }
 
@@ -47,5 +36,7 @@ export async function processImage(filePath: string) {
     await fs.remove(filePath);
   }
 
-  return webpPath;
+  return {
+    path: webpPath,
+  };
 }
